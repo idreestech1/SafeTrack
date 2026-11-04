@@ -13,6 +13,7 @@ import {
   ListFilter,
   Search,
   Download,
+  RefreshCw,
   Compass,
   Phone,
   Repeat,
@@ -303,139 +304,156 @@ const PassengerRequests = ({
 
   return (
     <div className="pr-page">
-      {/* ---------- Header ---------- */}
-      <Card className="pr-card pr-header">
-        <div className="pr-header__text">
-          <p className="pr-crumb">
-            TRANSIT TELEMATICS / <span>DEMAND RESPONSIVE TRANSIT (DRT)</span>
-          </p>
-          <h1>Passenger Requests</h1>
-          <p className="pr-header__sub">
-            Real-time public transit digital hailing, stop pickup requests, seat booking handshakes, and nearby driver dispatch.
-          </p>
+      {/* ---------- Unified Command Control Card ---------- */}
+      <Card className="pr-card pr-control-card">
+        {/* Row 1: Header title, badge & actions */}
+        <div className="pr-control-row pr-control-row--header">
+          <div className="pr-control-title-block">
+            <div className="pr-control-kicker">
+              <span>TRANSIT TELEMATICS</span>
+              <span className="pr-control-sep">•</span>
+              <span>DEMAND RESPONSIVE TRANSIT (DRT)</span>
+            </div>
+            <div className="pr-control-main-title">
+              <h1>Passenger Requests</h1>
+              <span className="pr-badge-live">
+                <span className="pr-pulse-dot" /> Live Telemetry
+              </span>
+            </div>
+          </div>
+
+          <div className="pr-control-actions">
+            <span className="pr-geofence-chip">
+              <span className="pr-geofence-dot" /> Auto-Dispatch Geofence: {GEOFENCE_M / 1000}km
+            </span>
+            <Button size="sm" className="pr-btn-broadcast" onClick={onBroadcastStopAlert}>
+              <Radio size={14} /> Broadcast Stop Alert
+            </Button>
+            <Button size="sm" variant="outline" className="pr-btn-rules" onClick={onDispatchRules}>
+              <SlidersHorizontal size={13} /> Dispatch Rules
+            </Button>
+          </div>
         </div>
 
-        <div className="pr-header__actions">
-          <span className="pr-geofence">
-            <i /> Auto-Dispatch Geofence: {GEOFENCE_M / 1000}km
-          </span>
-          <Button className="pr-btn-broadcast" onClick={onBroadcastStopAlert}>
-            <Radio size={16} /> Broadcast Stop Alert
-          </Button>
-          <Button variant="outline" className="pr-btn-soft" onClick={onDispatchRules}>
-            <SlidersHorizontal size={15} /> Dispatch Rules
-          </Button>
+        {/* Row 2: Status tabs & stream controls */}
+        <div className="pr-control-row pr-control-row--toolbar">
+          <Tabs value={tab} onValueChange={(v) => { setTab(v); setPage(1); }} className="pr-tabs-root">
+            <TabsList className="pr-tabs">
+              {TABS.map((t) => (
+                <TabsTrigger key={t.value} value={t.value} className="pr-tab">
+                  {t.label}
+                  <span className={`pr-count pr-count--${t.tone}`}>{TAB_COUNTS[t.value]}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          <div className="pr-stream-controls">
+            <span className="pr-stream-tag">
+              <span className="pr-stream-dot" /> Refresh: 1s
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className={"pr-btn-sort" + (nearestFirst ? " is-active" : "")}
+              onClick={() => setNearestFirst((s) => !s)}
+            >
+              <ListFilter size={13} />
+              {nearestFirst ? "Nearest First" : "Default Order"}
+            </Button>
+            <Button variant="outline" size="sm" className="pr-btn-export" onClick={exportQueue}>
+              <Download size={13} /> Export CSV
+            </Button>
+          </div>
         </div>
       </Card>
 
-      {/* ---------- Status tabs ---------- */}
-      <div className="pr-tabsbar">
-        <Tabs value={tab} onValueChange={(v) => { setTab(v); setPage(1); }}>
-          <TabsList className="pr-tabs">
-            {TABS.map((t) => (
-              <TabsTrigger key={t.value} value={t.value} className="pr-tab">
-                {t.label}
-                <span className={`pr-count pr-count--${t.tone}`}>{TAB_COUNTS[t.value]}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        <div className="pr-stream">
-          <span>Stream refresh: 1s</span>
-          <button
-            type="button"
-            className={nearestFirst ? "is-on" : ""}
-            aria-label="Sort nearest first"
-            aria-pressed={nearestFirst}
-            onClick={() => setNearestFirst((s) => !s)}
-          >
-            <ListFilter size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* ---------- KPI cards ---------- */}
+      {/* ---------- Compact Executive KPI Cards ---------- */}
       <section className="pr-kpis">
-        {/* Live hailing demand */}
-        <Card className="pr-card pr-kpi">
-          <div className="pr-kpi__top">
+        {/* 1. Live Hailing Demand */}
+        <Card className="pr-card pr-kpi pr-kpi--blue">
+          <div className="pr-kpi__header">
             <span className="pr-kpi__label">LIVE HAILING DEMAND</span>
-            <span className="pr-kpi__icon pr-kpi__icon--blue"><Hand size={20} /></span>
+            <span className="pr-kpi__pill pr-kpi__pill--green">{demand.change}</span>
           </div>
-          <div className="pr-kpi__value">
-            <strong>{demand.active}</strong>
-            <span className="pr-kpi__unit pr-kpi__unit--blue">Active</span>
-            <em className="pr-chip pr-chip--green">{demand.change}</em>
+          <div className="pr-kpi__main">
+            <h2 className="pr-kpi__value">
+              {demand.active} <span className="pr-kpi__unit">Active</span>
+            </h2>
           </div>
-          <div className="pr-stack">
-            <i className="pr-stack__amber" style={{ flex: demand.unassigned / demandTotal }} />
-            <i className="pr-stack__blue" style={{ flex: demand.enRoute / demandTotal }} />
-            <i className="pr-stack__green" style={{ flex: demand.arriving / demandTotal }} />
-          </div>
-          <p className="pr-kpi__foot pr-kpi__foot--gap">
+          <div className="pr-kpi__meta">
             <span>{demand.unassigned} Unassigned</span>
+            <span>•</span>
             <span>{demand.enRoute} En-Route</span>
+            <span>•</span>
             <span>{demand.arriving} Arriving</span>
-          </p>
+          </div>
+          <div className="pr-kpi__bar">
+            <div className="pr-kpi__bar-fill pr-kpi__bar-fill--blue" style={{ width: "88%" }} />
+          </div>
         </Card>
 
-        {/* Avg pickup distance */}
-        <Card className="pr-card pr-kpi">
-          <div className="pr-kpi__top">
+        {/* 2. Avg Pickup Distance */}
+        <Card className="pr-card pr-kpi pr-kpi--indigo">
+          <div className="pr-kpi__header">
             <span className="pr-kpi__label">AVG. PICKUP DISTANCE</span>
-            <span className="pr-kpi__icon pr-kpi__icon--grey"><Navigation size={20} /></span>
+            <span className="pr-kpi__pill pr-kpi__pill--green">{pickup.vs}</span>
           </div>
-          <div className="pr-kpi__value">
-            <strong>{pickup.meters}</strong>
-            <span className="pr-kpi__unit">meters</span>
-            <em className="pr-chip pr-chip--green">{pickup.vs}</em>
+          <div className="pr-kpi__main">
+            <h2 className="pr-kpi__value">
+              {pickup.meters} <span className="pr-kpi__unit">meters</span>
+            </h2>
           </div>
-          <svg className="pr-spark" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M10 30 C 50 34, 80 14, 120 14 S 170 16, 190 12" />
-          </svg>
-          <p className="pr-kpi__foot">
-            <span>Optimal Corridor Band</span>
-            <strong>{pickup.target}</strong>
-          </p>
+          <div className="pr-kpi__meta">
+            <span>Optimal Corridor</span>
+            <span>•</span>
+            <span className="pr-kpi__accent">Target {pickup.target}</span>
+          </div>
+          <div className="pr-kpi__bar">
+            <div className="pr-kpi__bar-fill pr-kpi__bar-fill--indigo" style={{ width: "60%" }} />
+          </div>
         </Card>
 
-        {/* Avg driver response */}
-        <Card className="pr-card pr-kpi">
-          <div className="pr-kpi__top">
+        {/* 3. Avg Driver Response */}
+        <Card className="pr-card pr-kpi pr-kpi--emerald">
+          <div className="pr-kpi__header">
             <span className="pr-kpi__label">AVG. DRIVER RESPONSE</span>
-            <span className="pr-kpi__icon pr-kpi__icon--grey"><Gauge size={20} /></span>
+            <span className="pr-kpi__pill pr-kpi__pill--blue">{response.label}</span>
           </div>
-          <div className="pr-kpi__value">
-            <strong>{response.seconds}</strong>
-            <span className="pr-kpi__unit">seconds</span>
-            <em className="pr-chip pr-chip--green">{response.label}</em>
+          <div className="pr-kpi__main">
+            <h2 className="pr-kpi__value">
+              {response.seconds} <span className="pr-kpi__unit">seconds</span>
+            </h2>
           </div>
-          <div className="pr-segments">
-            <i /><i /><i /><i className="is-dim" />
-          </div>
-          <p className="pr-kpi__foot">
+          <div className="pr-kpi__meta">
             <span>SLA Handshake Limit</span>
-            <strong>{response.limit}</strong>
-          </p>
+            <span>•</span>
+            <span className="pr-kpi__accent">{response.limit}</span>
+          </div>
+          <div className="pr-kpi__bar">
+            <div className="pr-kpi__bar-fill pr-kpi__bar-fill--emerald" style={{ width: "60%" }} />
+          </div>
         </Card>
 
-        {/* Fulfilment */}
-        <Card className="pr-card pr-kpi">
-          <div className="pr-kpi__top">
+        {/* 4. Request Fulfillment */}
+        <Card className="pr-card pr-kpi pr-kpi--green">
+          <div className="pr-kpi__header">
             <span className="pr-kpi__label">REQUEST FULFILLMENT</span>
-            <span className="pr-kpi__icon pr-kpi__icon--green"><BadgeCheck size={20} /></span>
+            <span className="pr-kpi__pill pr-kpi__pill--green">Goal &gt; 97%</span>
           </div>
-          <div className="pr-kpi__value">
-            <strong>{fulfilment.pct}</strong>
-            <span className="pr-kpi__unit pr-kpi__unit--green">%</span>
-            <span className="pr-kpi__drops">{fulfilment.drops}</span>
+          <div className="pr-kpi__main">
+            <h2 className="pr-kpi__value">
+              {fulfilment.pct}<span className="pr-kpi__percent">%</span>
+            </h2>
           </div>
-          <div className="pr-bar"><div style={{ width: `${fulfilment.pct}%` }} /></div>
-          <p className="pr-kpi__foot">
-            <span>Target Standard</span>
-            <strong>{fulfilment.threshold}</strong>
-          </p>
+          <div className="pr-kpi__meta">
+            <span>{fulfilment.drops}</span>
+            <span>•</span>
+            <span className="pr-kpi__accent">Standard Exceeded</span>
+          </div>
+          <div className="pr-kpi__bar">
+            <div className="pr-kpi__bar-fill pr-kpi__bar-fill--green" style={{ width: `${fulfilment.pct}%` }} />
+          </div>
         </Card>
       </section>
 
@@ -446,20 +464,28 @@ const PassengerRequests = ({
           <div className="pr-queue__head">
             <div className="pr-queue__title">
               <h2>Active Hailing Queue</h2>
-              <Badge className="pr-live">{rows.length || 0} Live Feed</Badge>
+              <span className="pr-live-tag">
+                <span className="pr-live-dot" /> {rows.length || 0} Units Monitored
+              </span>
             </div>
             <div className="pr-queue__tools">
               <div className="pr-search">
-                <Search size={16} />
+                <Search size={13} />
                 <Input
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-                  placeholder="Search ID, passenger, stop..."
+                  placeholder="Search passenger, stop, ID..."
                   className="pr-search__input"
                 />
               </div>
-              <Button variant="ghost" size="icon" className="pr-iconbtn" aria-label="Export queue" onClick={exportQueue}>
-                <Download size={17} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="pr-btn-refresh"
+                title="Reset / Refresh queue"
+                onClick={() => { setQuery(""); setPage(1); }}
+              >
+                <RefreshCw size={12} />
               </Button>
             </div>
           </div>
@@ -467,11 +493,11 @@ const PassengerRequests = ({
           <Table className="pr-table">
             <TableHeader>
               <TableRow>
-                <TableHead>REQUEST ID</TableHead>
-                <TableHead>PASSENGER</TableHead>
-                <TableHead>PICKUP LANDMARK</TableHead>
-                <TableHead>VEHICLE / DRIVER</TableHead>
-                <TableHead className="pr-right">DISTANCE &amp; ETA</TableHead>
+                <TableHead className="pr-th-id">REQUEST ID</TableHead>
+                <TableHead className="pr-th-pax">PASSENGER</TableHead>
+                <TableHead className="pr-th-stop">PICKUP LANDMARK</TableHead>
+                <TableHead className="pr-th-veh">VEHICLE / DRIVER</TableHead>
+                <TableHead className="pr-th-eta pr-right">DISTANCE &amp; ETA</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -488,28 +514,29 @@ const PassengerRequests = ({
 
               {pageRows.map((r) => {
                 const dot = dotFor(r.status);
+                const isSel = r.id === selectedId;
                 return (
                   <TableRow
                     key={r.id}
-                    className={"pr-row" + (r.id === selectedId ? " is-selected" : "")}
+                    className={"pr-row" + (isSel ? " is-selected" : "")}
                     onClick={() => setSelectedId(r.id)}
                   >
-                    <TableCell>
+                    <TableCell className="pr-td-id">
                       <div className="pr-req">
                         <div className="pr-req__line">
                           <strong className={r.boarded ? "pr-req__id pr-req__id--done" : "pr-req__id"}>{r.id}</strong>
                           {dot && <i className={`pr-req__dot pr-req__dot--${dot}`} />}
                         </div>
-                        <span>{r.time}</span>
+                        <span className="pr-req__time">{r.time}</span>
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="pr-td-pax">
                       <div className="pr-pax">
                         <Avatar className="pr-avatar">
                           <AvatarFallback>{initials(r.passenger.name)}</AvatarFallback>
                         </Avatar>
-                        <div>
+                        <div className="pr-pax__info">
                           <strong>{r.passenger.name}</strong>
                           <span>
                             #{r.passenger.code} <i>•</i>
@@ -519,14 +546,14 @@ const PassengerRequests = ({
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="pr-td-stop">
                       <div className="pr-stop">
                         <strong>{r.stop}</strong>
                         <span>{r.stopNote}</span>
                       </div>
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="pr-td-veh">
                       <div className="pr-veh">
                         <div className="pr-veh__line">
                           <span className="pr-plate">{r.vehicle.id}</span>
@@ -538,11 +565,10 @@ const PassengerRequests = ({
                       </div>
                     </TableCell>
 
-                    <TableCell className="pr-right">
+                    <TableCell className="pr-td-eta pr-right">
                       <div className="pr-dist">
                         <strong>{r.distanceM >= 1000 ? `${(r.distanceM / 1000).toFixed(1)} km` : `${r.distanceM} m`}</strong>
                         <span className={`pr-dist__eta pr-dist__eta--${r.etaTone}`}>{r.eta}</span>
-                        {r.etaNote && <span className="pr-dist__note">{r.etaNote}</span>}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -553,14 +579,14 @@ const PassengerRequests = ({
 
           <div className="pr-queue__foot">
             <p>
-              Showing active window {pageRows.length} of {liveTotal} live requests
+              Showing <strong>{pageRows.length}</strong> of <strong>{liveTotal}</strong> live requests
               <i>•</i>
-              <span className="pr-mesh"><Radio size={13} /> Dispatcher Telemetry Mesh Synced</span>
+              <span className="pr-mesh"><Radio size={12} /> Dispatcher Telemetry Mesh Synced</span>
             </p>
 
             <nav className="pr-pager" aria-label="Pagination">
               <button type="button" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft size={13} /> Previous
+                <ChevronLeft size={12} /> Prev
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                 <button
@@ -573,70 +599,97 @@ const PassengerRequests = ({
                 </button>
               ))}
               <button type="button" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-                Next <ChevronRight size={13} />
+                Next <ChevronRight size={12} />
               </button>
             </nav>
           </div>
         </Card>
 
-        {/* Right column */}
-        <div className="pr-side">
-          <Card className="pr-card pr-radar">
-            <div className="pr-radar__head">
-              <div className="pr-radar__title">
-                <Compass size={20} />
-                <h3>Tactical Hailing Geo-Radar</h3>
-              </div>
+        {/* Right column: Unified Tactical Dispatch Dossier */}
+        <Card className="pr-card pr-dossier">
+          <div className="pr-dossier__head">
+            <div className="pr-dossier__title">
+              <Compass size={14} className="pr-dossier__icon" />
+              <h3>Tactical Dispatch Dossier</h3>
+            </div>
+            <div className="pr-dossier__badges">
+              <span className="pr-dossier__req-badge">{selected.id}</span>
               <Badge className="pr-zone">Peshawar Central</Badge>
             </div>
+          </div>
 
+          {/* Compact Geo-Radar Map */}
+          <div className="pr-dossier__map-wrap">
             <GeoRadar request={selected} />
+          </div>
 
-            <dl className="pr-radar__info">
-              <div><dt>Selected Corridor:</dt><dd>{selected.corridor}</dd></div>
-              <div><dt>Available Standby Units:</dt><dd className="pr-green">{STANDBY}</dd></div>
-              <div><dt>Estimated Boarding Wait:</dt><dd className="pr-blue">{BOARDING_WAIT}</dd></div>
-            </dl>
-          </Card>
-
-          <Card className="pr-card pr-hand">
-            <div className="pr-hand__head">
-              <h3>Real-Time Dispatch Handshake</h3>
-              <Badge className="pr-active">
-                {selected.id}
-                <br />
-                {selected.status === "completed" ? "Boarded" : "Active"}
-              </Badge>
-            </div>
-
-            <div className="pr-hand__driver">
-              <Avatar className="pr-hand__avatar">
-                <AvatarFallback>{initials(selected.vehicle.driver)}</AvatarFallback>
-              </Avatar>
-              <div className="pr-hand__info">
-                <div className="pr-hand__top">
-                  <strong>{selected.vehicle.driver}</strong>
-                  <span className="pr-hand__bus">Bus {selected.vehicle.id}</span>
+          {/* Handshake & Active Unit Telemetry */}
+          <div className="pr-dossier__body">
+            {/* Passenger & Vehicle Quick Glance */}
+            <div className="pr-dossier__glance">
+              <div className="pr-glance-item">
+                <span className="pr-glance-label">PASSENGER</span>
+                <div className="pr-glance-user">
+                  <Avatar className="pr-avatar-mini">
+                    <AvatarFallback>{initials(selected.passenger.name)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <strong>{selected.passenger.name}</strong>
+                    <span>#{selected.passenger.code} • ⭐ {selected.passenger.rating.toFixed(1)}</span>
+                  </div>
                 </div>
-                <p>{selected.vehicle.route}</p>
-                <p className="pr-hand__meta">
-                  <b>Seat {selected.vehicle.seatsFree} Free</b>
-                  <i>•</i>
-                  <span>Speed: {selected.vehicle.speed} km/h</span>
-                </p>
+              </div>
+
+              <div className="pr-glance-item">
+                <span className="pr-glance-label">ASSIGNED UNIT</span>
+                <div className="pr-glance-user">
+                  <Avatar className="pr-avatar-mini pr-avatar-mini--blue">
+                    <AvatarFallback>{initials(selected.vehicle.driver)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <strong>{selected.vehicle.driver}</strong>
+                    <span>Bus <b className="text-blue-700">{selected.vehicle.id}</b> • {selected.vehicle.seatsFree} Seat Free</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="pr-hand__actions">
-              <Button className="pr-btn-call" onClick={() => onCallCabRadio?.(selected)}>
-                <Phone size={15} /> Call Cab Radio
+            {/* Route & Stop Corridor info */}
+            <div className="pr-dossier__corridor">
+              <div className="pr-corridor-row">
+                <span className="pr-corridor-label">Pickup Stop:</span>
+                <span className="pr-corridor-val">{selected.stop} ({selected.stopNote})</span>
+              </div>
+              <div className="pr-corridor-row">
+                <span className="pr-corridor-label">Live Corridor:</span>
+                <span className="pr-corridor-val">{selected.corridor}</span>
+              </div>
+            </div>
+
+            {/* Telemetry Quick Badges */}
+            <div className="pr-dossier__pills">
+              <span className="pr-tele-pill pr-tele-pill--green">
+                Standby: {STANDBY.split("/")[0].trim()}
+              </span>
+              <span className="pr-tele-pill pr-tele-pill--blue">
+                Boarding Wait: {BOARDING_WAIT}
+              </span>
+              <span className="pr-tele-pill pr-tele-pill--speed">
+                Speed: {selected.vehicle.speed} km/h
+              </span>
+            </div>
+
+            {/* Operational Direct Actions */}
+            <div className="pr-dossier__actions">
+              <Button size="sm" className="pr-btn-call" onClick={() => onCallCabRadio?.(selected)}>
+                <Phone size={13} /> Call Cab Radio
               </Button>
-              <Button variant="outline" className="pr-btn-soft" onClick={() => onReassignUnit?.(selected)}>
-                <Repeat size={15} /> Reassign Unit
+              <Button size="sm" variant="outline" className="pr-btn-reassign" onClick={() => onReassignUnit?.(selected)}>
+                <Repeat size={13} /> Reassign Unit
               </Button>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       </section>
 
       {/* ---------- SOP flow ---------- */}
