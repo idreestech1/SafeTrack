@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Circle, Polyline } from "react-leaflet";
@@ -378,6 +379,7 @@ const TacticalMap = ({ incidents, focused, onFocus, showCorridor, patrol, patrol
 /* ================================================================== */
 
 const EmergencySOS = ({ onCallDriver, onCctv, onRadioParamedic }) => {
+  const navigate = useNavigate();
   const [incidents, setIncidents] = useState(INCIDENTS);
   const [focusedId, setFocusedId] = useState(INCIDENTS[0].id);
   const [traffic, setTraffic] = useState(true);
@@ -452,16 +454,18 @@ const EmergencySOS = ({ onCallDriver, onCctv, onRadioParamedic }) => {
   return (
     <div className="es-page">
       {/* ---------- Alert banner ---------- */}
-      <div className={"es-banner" + (unresolved.length === 0 ? " es-banner--clear" : "")}>
-        <p>
+      <div className={"es-banner" + (unresolved.length === 0 ? " es-banner--clear" : "")} role="alert">
+        <div className="es-banner__left">
           <i className="es-banner__dot" />
-          <Asterisk size={20} strokeWidth={3} />
-          {unresolved.length === 0
-            ? "ALL CLEAR — NO ACTIVE EMERGENCIES"
-            : `${unresolved.length} ACTIVE EMERGENCIES DETECTED — POLICE PATROL UNITS COORDINATING`}
-        </p>
+          <Siren size={13} strokeWidth={2.4} />
+          <span className="es-banner__text">
+            {unresolved.length === 0
+              ? "ALL CLEAR — NO ACTIVE EMERGENCIES IN PROGRESS"
+              : `${unresolved.length} ACTIVE EMERGENCIES DETECTED — POLICE PATROL UNITS COORDINATING`}
+          </span>
+        </div>
         <div className="es-banner__chips">
-          <span>METRO COMMAND REGION: PESHAWAR</span>
+          <span className="es-banner__region">METRO COMMAND REGION: PESHAWAR</span>
           <span className="es-banner__defcon">DEFCON 2 TACTICAL</span>
         </div>
       </div>
@@ -469,35 +473,117 @@ const EmergencySOS = ({ onCallDriver, onCctv, onRadioParamedic }) => {
       {/* ---------- Header ---------- */}
       <header className="es-header">
         <div className="es-header__text">
-          <p className="es-kicker">
-            <span><Shield size={15} fill="currentColor" /> TACTICAL OPERATIONS DIVISION</span>
-            <span><i /> INCIDENT COMMAND SYSTEM (ICS-200)</span>
-          </p>
-          <h1>Emergency / SOS Control Center</h1>
-          <p className="es-header__sub">
-            High-priority incident command, live distress dispatch, and police coordination unit.
-          </p>
+          <div className="es-kicker">
+            <Shield size={12} /> TACTICAL OPERATIONS DIVISION
+            <span className="es-kicker__sep">•</span>
+            INCIDENT COMMAND SYSTEM (ICS-200)
+          </div>
+          <div className="es-header__title-row">
+            <h1>Emergency / SOS Control Center</h1>
+            <span className="es-header__sep">•</span>
+            <p className="es-header__sub">
+              High-priority incident command, live distress dispatch, and police coordination unit
+            </p>
+          </div>
         </div>
 
-        <div className="es-stats">
-          <div className="es-stat">
-            <span className="es-stat__label">ACTIVE SOS <BellRing size={14} className="es-red" /></span>
-            <strong className="es-red">{String(unresolved.length).padStart(2, "0")} <small>PRIORITY 1</small></strong>
-          </div>
-          <div className="es-stat">
-            <span className="es-stat__label">RESOLVED TODAY <CircleCheck size={14} className="es-blue" /></span>
-            <strong>{resolvedTotal} <small>units</small></strong>
-          </div>
-          <div className="es-stat">
-            <span className="es-stat__label">AVG RESPONSE <Timer size={14} className="es-blue" /></span>
-            <strong>{STATS.avgResponse} <small>mins target</small></strong>
-          </div>
-          <div className="es-stat">
-            <span className="es-stat__label">UNATTENDED <ShieldCheck size={15} className="es-green" /></span>
-            <strong>{String(STATS.unattended).padStart(2, "0")} <small className="es-green">ZERO BACKLOG</small></strong>
-          </div>
+        <div className="es-header__actions">
+          <Button
+            variant="outline"
+            size="sm"
+            className={"es-btn-soft" + (siren ? " is-active" : "")}
+            onClick={() => setSiren((s) => !s)}
+          >
+            {siren ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            <span>Siren: {siren ? "Active" : "Muted"}</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={"es-btn-soft" + (traffic ? " is-active" : "")}
+            onClick={() => setTraffic((t) => !t)}
+          >
+            <RouteIcon size={13} />
+            <span>Traffic Flow</span>
+          </Button>
         </div>
       </header>
+
+      {/* ---------- KPI cards ---------- */}
+      <section className="es-kpis">
+        <Card className="es-card es-kpi">
+          <div className="es-kpi__top">
+            <span className="es-kpi__label">ACTIVE SOS</span>
+            <span className="es-kpi__icon es-kpi__icon--red"><BellRing size={12} strokeWidth={2.2} /></span>
+          </div>
+          <div className="es-kpi__value">
+            <strong className="es-red">{String(unresolved.length).padStart(2, "0")}</strong>
+            <em className="es-kpi__chip es-kpi__chip--red">PRIORITY 1</em>
+          </div>
+          <p className="es-kpi__foot">
+            <i className="es-dot es-dot--red" />
+            Requires immediate tactical intervention
+          </p>
+          <div className="es-kpi__bar">
+            <div className="es-kpi__bar-fill es-kpi__bar-fill--red" />
+          </div>
+        </Card>
+
+        <Card className="es-card es-kpi">
+          <div className="es-kpi__top">
+            <span className="es-kpi__label">RESOLVED TODAY</span>
+            <span className="es-kpi__icon es-kpi__icon--blue"><CircleCheck size={12} strokeWidth={2.2} /></span>
+          </div>
+          <div className="es-kpi__value">
+            <strong>{resolvedTotal}</strong>
+            <span>units</span>
+          </div>
+          <p className="es-kpi__foot">
+            <i className="es-dot es-dot--blue" />
+            100% incident closure rate
+          </p>
+          <div className="es-kpi__bar">
+            <div className="es-kpi__bar-fill es-kpi__bar-fill--blue" />
+          </div>
+        </Card>
+
+        <Card className="es-card es-kpi">
+          <div className="es-kpi__top">
+            <span className="es-kpi__label">AVG RESPONSE</span>
+            <span className="es-kpi__icon es-kpi__icon--emerald"><Timer size={12} strokeWidth={2.2} /></span>
+          </div>
+          <div className="es-kpi__value">
+            <strong>{STATS.avgResponse}</strong>
+            <span>mins</span>
+            <em className="es-kpi__chip es-kpi__chip--green">-42s vs target</em>
+          </div>
+          <p className="es-kpi__foot">
+            <i className="es-dot es-dot--green" />
+            Target benchmark &lt; 5.0 mins
+          </p>
+          <div className="es-kpi__bar">
+            <div className="es-kpi__bar-fill es-kpi__bar-fill--emerald" />
+          </div>
+        </Card>
+
+        <Card className="es-card es-kpi">
+          <div className="es-kpi__top">
+            <span className="es-kpi__label">UNATTENDED</span>
+            <span className="es-kpi__icon es-kpi__icon--cyan"><ShieldCheck size={12} strokeWidth={2.2} /></span>
+          </div>
+          <div className="es-kpi__value">
+            <strong>{String(STATS.unattended).padStart(2, "0")}</strong>
+            <em className="es-kpi__chip es-kpi__chip--green">ZERO BACKLOG</em>
+          </div>
+          <p className="es-kpi__foot">
+            <i className="es-dot es-dot--green" />
+            All distress streams triaged
+          </p>
+          <div className="es-kpi__bar">
+            <div className="es-kpi__bar-fill es-kpi__bar-fill--cyan" />
+          </div>
+        </Card>
+      </section>
 
       {/* ---------- Main grid ---------- */}
       <div className="es-grid">
@@ -684,7 +770,7 @@ const EmergencySOS = ({ onCallDriver, onCctv, onRadioParamedic }) => {
                       <Button className="es-act es-act--call" onClick={callDriver}>
                         <Phone size={17} /> Call Driver Direct
                       </Button>
-                      <Button className="es-act es-act--cctv" onClick={() => onCctv?.(inc)}>
+                      <Button className="es-act es-act--cctv" onClick={() => (onCctv ? onCctv(inc) : navigate("/camera"))}>
                         <Video size={17} /> CCTV Live Feed
                       </Button>
                       <Button className="es-act es-act--dispatch" onClick={dispatchInterceptor} disabled={dispatched}>
@@ -747,7 +833,14 @@ const EmergencySOS = ({ onCallDriver, onCctv, onRadioParamedic }) => {
                 <div className="es-inc__actions">
                   {isMedical ? (
                     <>
-                      <Button variant="outline" className="es-btn-soft" onClick={() => onRadioParamedic?.(inc)}>
+                      <Button
+                        variant="outline"
+                        className="es-btn-soft"
+                        onClick={() => {
+                          if (onRadioParamedic) onRadioParamedic(inc);
+                          else addLog({ tone: "amber", bold: "1122 Paramedics Dispatched:", text: ` Medical unit radio link confirmed for incident ${inc.id}.` });
+                        }}
+                      >
                         <Headset size={15} /> Radio Paramedic
                       </Button>
                       <Button className="es-btn-blue" onClick={() => setFocusedId(inc.id)}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
@@ -68,12 +69,12 @@ import "./dashboard.css";
 /* ================================================================== */
 
 const KPIS = [
-  { id: "vehicles", label: "Active Vehicles", value: "128", icon: Bus, chip: "+8.2%", chipIcon: TrendingUp, note: "vs yesterday" },
-  { id: "drivers", label: "Active Drivers", value: "132", icon: IdCard, chip: "98.5%", note: "shift attendance" },
-  { id: "trips", label: "Active Trips", value: "86", icon: Navigation, chip: "14 soon", note: "completing" },
-  { id: "pax", label: "Passengers Today", value: "4,821", icon: Users, chip: "+12.4%", note: "vs last Tue" },
-  { id: "alerts", label: "Emergency Alerts", value: "3", icon: Siren, danger: true, chip: "CRITICAL", note: "Requires immediate action" },
-  { id: "offline", label: "Offline Vehicles", value: "7", icon: WifiOff, chip: "2 maint • 5 depot" },
+  { id: "vehicles", label: "Active Vehicles", value: "128", icon: Bus, chip: "+8.2%", chipIcon: TrendingUp, note: "vs yesterday", accent: "blue" },
+  { id: "drivers", label: "Active Drivers", value: "132", icon: IdCard, chip: "98.5%", note: "shift attendance", accent: "emerald" },
+  { id: "trips", label: "Active Trips", value: "86", icon: Navigation, chip: "14 soon", note: "completing", accent: "indigo" },
+  { id: "pax", label: "Passengers Today", value: "4,821", icon: Users, chip: "+12.4%", note: "vs last Tue", accent: "cyan" },
+  { id: "alerts", label: "Emergency Alerts", value: "3", icon: Siren, danger: true, chip: "CRITICAL", note: "Immediate Action", accent: "red" },
+  { id: "offline", label: "Offline Vehicles", value: "7", icon: WifiOff, chip: "2 maint • 5 depot", accent: "slate" },
 ];
 
 const ROUTES = [
@@ -346,7 +347,7 @@ const FleetMap = ({ vehicles, paths, geo, selectedId, onSelect }) => {
   useEffect(() => {
     if (!map) return;
     const pts = positioned.map((v) => v.pos);
-    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.35), { animate: false, maxZoom: 12 });
+    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.12), { animate: false, maxZoom: 12 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
@@ -552,6 +553,7 @@ const Dashboard = ({
   onViewAllAlerts,
   onRouteBalancer,
 }) => {
+  const navigate = useNavigate();
   const geo = useRoadRoutes();
   const paths = useMemo(
     () => Object.fromEntries(ROUTES.map((r) => [r.id, buildPath(geo[r.id])])),
@@ -620,7 +622,23 @@ const Dashboard = ({
   const removedIn = (cat) => ALERTS.filter((a) => resolved.includes(a.id) && (cat === "all" || a.cat === cat)).length;
   const count = (cat) => Math.max(0, ALERT_COUNTS[cat] - removedIn(cat));
 
+  const handleKpiClick = (id) => {
+    if (id === "vehicles" || id === "offline") navigate("/vehicles");
+    else if (id === "drivers") navigate("/drivers");
+    else if (id === "trips") navigate("/trips");
+    else if (id === "pax") navigate("/passengers");
+    else if (id === "alerts") navigate("/emergency");
+  };
+
   const handleAlertAction = (alert, action) => {
+    if (action.label.includes("SOS")) {
+      navigate("/emergency");
+      return;
+    }
+    if (action.label.includes("Path")) {
+      navigate("/routes");
+      return;
+    }
     if (action.focus) {
       setStatusFilter("all");
       setQuery("");
@@ -651,16 +669,21 @@ const Dashboard = ({
       {/* ---------- Header ---------- */}
       <header className="db-header">
         <div className="db-header__text">
-          <p className="db-kicker"><span /> NATIONAL TRANSIT COMMAND CORE</p>
-          <h1>Dashboard</h1>
-          <p className="db-header__sub">
-            Real-time overview of public transport operations, fleet activity, and safety protocols.
-          </p>
+          <div className="db-kicker">
+            <span className="db-kicker__dot" /> NATIONAL TRANSIT COMMAND CORE
+          </div>
+          <div className="db-header__title-row">
+            <h1>Dashboard</h1>
+            <span className="db-header__sep">•</span>
+            <p className="db-header__sub">
+              Real-time overview of public transport operations, fleet activity, and safety protocols
+            </p>
+          </div>
         </div>
 
         <div className="db-header__actions">
-          <div className="db-chip">
-            <Calendar size={16} />
+          <div className="db-chip db-chip--time">
+            <Calendar size={13} />
             <strong>Today, {dateLabel}</strong>
             <span>{timeLabel} PKT</span>
           </div>
@@ -669,13 +692,14 @@ const Dashboard = ({
             className={"db-chip db-chip--btn" + (auto ? "" : " is-off")}
             onClick={() => setAuto((a) => !a)}
             aria-pressed={auto}
+            title={auto ? "Click to pause 3s live stream" : "Click to resume live stream"}
           >
             <span className="db-chip__dot" />
             <strong>{auto ? "Auto (3s)" : "Paused"}</strong>
-            <RefreshCw size={14} className={spin ? "db-spin" : ""} />
+            <RefreshCw size={12} className={spin ? "db-spin" : ""} />
           </button>
-          <Button className="db-btn-export" onClick={exportReport}>
-            <Download size={16} /> Export Report
+          <Button size="sm" className="db-btn-export" onClick={exportReport}>
+            <Download size={13} /> Export Report
           </Button>
         </div>
       </header>
@@ -685,27 +709,47 @@ const Dashboard = ({
         {KPIS.map((k) => {
           const Icon = k.icon;
           const ChipIcon = k.chipIcon;
+          const isSuccess = k.chip && (k.chip.startsWith("+") || k.chip.includes("%"));
+          const isDanger = k.danger;
+          const chipClass = isDanger
+            ? "db-kpi__chip--danger"
+            : isSuccess
+            ? "db-kpi__chip--success"
+            : k.id === "offline"
+            ? "db-kpi__chip--slate"
+            : "db-kpi__chip--neutral";
+
           return (
-            <Card key={k.id} className={"db-card db-kpi" + (k.danger ? " db-kpi--danger" : "")}>
+            <Card
+              key={k.id}
+              className={"db-card db-kpi" + (k.danger ? " db-kpi--danger" : "")}
+              onClick={() => handleKpiClick(k.id)}
+              style={{ cursor: "pointer" }}
+            >
               <div className="db-kpi__top">
                 <span className="db-kpi__label">
                   {k.danger && <i className="db-kpi__pulse" />}
                   {k.label}
                 </span>
-                <span className="db-kpi__icon"><Icon size={18} strokeWidth={1.9} /></span>
+                <span className={"db-kpi__icon" + (k.danger ? " db-kpi__icon--danger" : "")}>
+                  <Icon size={12} strokeWidth={2.2} />
+                </span>
               </div>
               <strong className="db-kpi__value">{k.value}</strong>
               <div className="db-kpi__foot">
                 {k.chip && (
-                  <span className={"db-kpi__chip" + (k.danger ? " db-kpi__chip--danger" : "")}>
-                    {ChipIcon && <ChipIcon size={11} />} {k.chip}
+                  <span className={`db-kpi__chip ${chipClass}`}>
+                    {ChipIcon && <ChipIcon size={9} />} {k.chip}
                   </span>
                 )}
                 {k.note && (
                   <span className={"db-kpi__note" + (k.danger ? " db-kpi__note--danger" : "")}>
-                    {k.danger && <TriangleAlert size={11} />} {k.note}
+                    {k.note}
                   </span>
                 )}
+              </div>
+              <div className="db-kpi__bar">
+                <div className={`db-kpi__bar-fill db-kpi__bar-fill--${k.accent || "blue"}`} />
               </div>
             </Card>
           );
@@ -802,9 +846,9 @@ const Dashboard = ({
 
           <VehiclePanel
             v={selected}
-            onContactPolice={() => onContactPolice?.(selected)}
-            onViewDetails={() => onViewDetails?.(selected)}
-            onTrackCctv={() => onTrackCctv?.(selected)}
+            onContactPolice={() => (onContactPolice ? onContactPolice(selected) : navigate("/emergency"))}
+            onViewDetails={() => (onViewDetails ? onViewDetails(selected) : navigate("/vehicles"))}
+            onTrackCctv={() => (onTrackCctv ? onTrackCctv(selected) : navigate("/camera"))}
           />
         </div>
       </Card>
@@ -814,7 +858,11 @@ const Dashboard = ({
         <Card className="db-card db-alerts">
           <div className="db-card__head">
             <h2><Bell size={18} /> Critical Alerts &amp; Telemetry Events</h2>
-            <button type="button" className="db-link" onClick={onViewAllAlerts}>
+            <button
+              type="button"
+              className="db-link"
+              onClick={() => (onViewAllAlerts ? onViewAllAlerts() : navigate("/alerts"))}
+            >
               View All ({count("all")})
             </button>
           </div>
@@ -871,12 +919,23 @@ const Dashboard = ({
         <Card className="db-card db-hail">
           <div className="db-card__head">
             <h2><Hand size={18} /> Live Hail Requests</h2>
-            <Badge className="db-pending">6 Pending</Badge>
+            <Badge
+              className="db-pending"
+              style={{ cursor: "pointer" }}
+              onClick={() => navigate("/passenger-requests")}
+            >
+              6 Pending
+            </Badge>
           </div>
 
           <div className="db-hail__list">
             {HAILS.map((h) => (
-              <article key={h.id} className="db-req">
+              <article
+                key={h.id}
+                className="db-req"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/passenger-requests")}
+              >
                 <div className="db-req__top">
                   <strong>Req #{h.id}</strong>
                   <span className="db-req__pax">Pax #{h.pax}</span>
@@ -911,7 +970,11 @@ const Dashboard = ({
             })}
             <div className="db-corridors__foot">
               <span>Fleet Utilization: 87.4%</span>
-              <button type="button" className="db-link" onClick={onRouteBalancer}>
+              <button
+                type="button"
+                className="db-link"
+                onClick={() => (onRouteBalancer ? onRouteBalancer() : navigate("/routes"))}
+              >
                 Route Balancer <ArrowRight size={13} />
               </button>
             </div>

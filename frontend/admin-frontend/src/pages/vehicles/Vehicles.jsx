@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Ellipsis,
+  X,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -133,6 +134,15 @@ const Vehicles = ({
   onBroadcastNotice,
   onOpenVehicle,
 }) => {
+  const [vehicleList, setVehicleList] = useState(VEHICLES);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [modalId, setModalId] = useState("");
+  const [modalReg, setModalReg] = useState("");
+  const [modalModel, setModalModel] = useState("Hino Metro");
+  const [modalRoute, setModalRoute] = useState("Peshawar → Mardan");
+  const [modalDepot, setModalDepot] = useState("Hayatabad Depot");
+  const [modalSeats, setModalSeats] = useState(45);
+
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [model, setModel] = useState("all");
@@ -147,10 +157,46 @@ const Vehicles = ({
 
   const resetPage = () => setPage(1);
 
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const newV = {
+      id: modalId.trim() || `PK-${Math.floor(150 + Math.random() * 50)}`,
+      reg: modalReg.trim() || `KP-LE-${Math.floor(1000 + Math.random() * 9000)}`,
+      model: modalModel,
+      spec: `${modalSeats}-Seater • Active Service`,
+      seats: Number(modalSeats) || 45,
+      load: 0,
+      driver: { name: "Standby Driver", code: "DRV-0000" },
+      route: modalRoute,
+      depot: modalDepot,
+      status: "active",
+    };
+    setVehicleList([newV, ...vehicleList]);
+    setIsAddModalOpen(false);
+    setModalId("");
+    setModalReg("");
+  };
+
+  const handleBulkReassign = () => {
+    if (onBulkReassign) {
+      onBulkReassign(selected);
+      return;
+    }
+    alert(`Bulk route reassignment dialog initiated for ${selected.length} vehicles: ${selected.join(", ")}`);
+  };
+
+  const handleBroadcastNotice = () => {
+    if (onBroadcastNotice) {
+      onBroadcastNotice(selected);
+      return;
+    }
+    alert(`In-cabin emergency broadcast dispatched to ${selected.length} vehicles: ${selected.join(", ")}`);
+  };
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const tri = TRIAGE.find((t) => t.value === triage);
-    const list = VEHICLES.filter(
+    const list = vehicleList.filter(
       (v) =>
         (status === "all" || v.status === status) &&
         (model === "all" || v.model === model) &&
@@ -165,7 +211,7 @@ const Vehicles = ({
     return list.sort((a, b) =>
       sortDir === "asc" ? idNumber(a.id) - idNumber(b.id) : idNumber(b.id) - idNumber(a.id)
     );
-  }, [query, status, model, route, depot, triage, sortDir]);
+  }, [vehicleList, query, status, model, route, depot, triage, sortDir]);
 
   const filtersActive =
     query || status !== "all" || model !== "all" || route !== "all" || depot !== "all" || triage !== "all";
@@ -217,19 +263,19 @@ const Vehicles = ({
   const kpis = [
     {
       id: "total", label: "Total Registered Fleet", icon: Bus, value: SUMMARY.total, unit: "units cataloged",
-      foot: "100% geo-fenced verified", dot: "blue",
+      foot: "100% geo-fenced verified", dot: "blue", accent: "blue",
     },
     {
       id: "routes", label: "On Active Routes", icon: Split, value: SUMMARY.onRoute, chip: SUMMARY.onRoutePct,
-      foot: "Live passenger service", dot: "green",
+      foot: "Live passenger service", dot: "green", accent: "emerald",
     },
     {
       id: "depot", label: "In Depot / Maintenance", icon: Wrench, value: SUMMARY.offline, unit: "units offline",
-      foot: `${SUMMARY.scheduled} scheduled inspection, ${SUMMARY.bayRepairs} bay repairs`, dot: "grey",
+      foot: `${SUMMARY.scheduled} scheduled, ${SUMMARY.bayRepairs} bay repairs`, dot: "grey", accent: "amber",
     },
     {
       id: "telematics", label: "Telematics Hardware Health", icon: Radio, value: SUMMARY.telematics, online: true,
-      foot: `${SUMMARY.degraded} unit degraded OBD stream`, dot: "blue",
+      foot: `${SUMMARY.degraded} unit degraded OBD stream`, dot: "blue", accent: "cyan",
     },
   ];
 
@@ -238,11 +284,14 @@ const Vehicles = ({
       {/* ---------- Header ---------- */}
       <header className="vh-header">
         <div className="vh-header__text">
-          <p className="vh-kicker"><Truck size={15} /> FLEET REGISTRY • SECTOR 01-NW</p>
-          <h1>Vehicles</h1>
-          <p className="vh-header__sub">
-            Master registry of public transit fleet, maintenance schedules, hardware telematics, and route assignments.
-          </p>
+          <div className="vh-kicker"><Truck size={13} /> FLEET REGISTRY • SECTOR 01-NW</div>
+          <div className="vh-header__title-row">
+            <h1>Vehicles</h1>
+            <span className="vh-header__sep">•</span>
+            <p className="vh-header__sub">
+              Master registry of public transit fleet, maintenance schedules, hardware telematics, and route assignments
+            </p>
+          </div>
         </div>
 
         <div className="vh-header__actions">
@@ -257,14 +306,18 @@ const Vehicles = ({
               e.target.value = "";
             }}
           />
-          <Button variant="outline" className="vh-btn-soft" onClick={() => fileRef.current?.click()}>
-            <Upload size={15} /> Import CSV
+          <Button variant="outline" size="sm" className="vh-btn-soft" onClick={() => fileRef.current?.click()}>
+            <Upload size={13} /> Import CSV
           </Button>
-          <Button variant="outline" className="vh-btn-soft" onClick={exportReport}>
-            <Download size={15} /> Export Fleet Report
+          <Button variant="outline" size="sm" className="vh-btn-soft" onClick={exportReport}>
+            <Download size={13} /> Export Fleet Report
           </Button>
-          <Button className="vh-btn-add" onClick={onAddVehicle}>
-            <CirclePlus size={17} /> Add Vehicle
+          <Button
+            size="sm"
+            className="vh-btn-add"
+            onClick={() => (onAddVehicle ? onAddVehicle() : setIsAddModalOpen(true))}
+          >
+            <CirclePlus size={14} /> Add Vehicle
           </Button>
         </div>
       </header>
@@ -277,7 +330,7 @@ const Vehicles = ({
             <Card key={k.id} className="vh-card vh-kpi">
               <div className="vh-kpi__top">
                 <span className="vh-kpi__label">{k.label}</span>
-                <span className="vh-kpi__icon"><Icon size={20} strokeWidth={1.9} /></span>
+                <span className="vh-kpi__icon"><Icon size={12} strokeWidth={2.2} /></span>
               </div>
 
               <div className="vh-kpi__value">
@@ -291,6 +344,10 @@ const Vehicles = ({
                 <i className={`vh-dot vh-dot--${k.dot}`} />
                 {k.foot}
               </p>
+
+              <div className="vh-kpi__bar">
+                <div className={`vh-kpi__bar-fill vh-kpi__bar-fill--${k.accent || "blue"}`} />
+              </div>
             </Card>
           );
         })}
@@ -300,7 +357,7 @@ const Vehicles = ({
       {sosVehicle && (
         <div className="vh-incident" role="alert">
           <span className="vh-incident__label">
-            <i /> PRIORITY INCIDENT:
+            <i className="vh-incident__pulse" /> PRIORITY INCIDENT:
           </span>
           <p>
             Vehicle{" "}
@@ -309,7 +366,7 @@ const Vehicles = ({
             </button>{" "}
             has broadcasted a silent Emergency SOS panic trigger near Ring Road Interchange.
           </p>
-          <Button className="vh-incident__btn" onClick={focusTelemetry}>
+          <Button size="sm" className="vh-incident__btn" onClick={focusTelemetry}>
             Focus Telemetry
           </Button>
         </div>
@@ -319,7 +376,7 @@ const Vehicles = ({
       <Card className="vh-card vh-filters">
         <div className="vh-filters__row">
           <div className="vh-search">
-            <Search size={16} />
+            <Search size={13} />
             <Input
               value={query}
               onChange={(e) => {
@@ -365,38 +422,42 @@ const Vehicles = ({
           </Select>
         </div>
 
-        <div className="vh-triage">
-          <span className="vh-triage__label">QUICK TRIAGE:</span>
-          {TRIAGE.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              className={"vh-triage__chip" + (triage === t.value ? " is-active" : "")}
-              onClick={() => { setTriage(t.value); resetPage(); }}
-            >
-              {t.label} ({t.count})
-            </button>
-          ))}
-        </div>
+        <div className="vh-filters__subrow">
+          <div className="vh-triage">
+            <span className="vh-triage__label">QUICK TRIAGE:</span>
+            {TRIAGE.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                className={"vh-triage__chip" + (triage === t.value ? " is-active" : "")}
+                onClick={() => { setTriage(t.value); resetPage(); }}
+              >
+                {t.label} ({t.count})
+              </button>
+            ))}
+          </div>
 
-        <div className="vh-bulk">
-          <span>{selected.length} selected</span>
-          <Button
-            variant="outline"
-            className="vh-bulk__btn"
-            disabled={selected.length === 0}
-            onClick={() => onBulkReassign?.(selected)}
-          >
-            Bulk Reassign
-          </Button>
-          <Button
-            variant="outline"
-            className="vh-bulk__btn"
-            disabled={selected.length === 0}
-            onClick={() => onBroadcastNotice?.(selected)}
-          >
-            Broadcast Notice
-          </Button>
+          <div className="vh-bulk">
+            <span className="vh-bulk__count">{selected.length} selected</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="vh-bulk__btn"
+              disabled={selected.length === 0}
+              onClick={handleBulkReassign}
+            >
+              Bulk Reassign
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="vh-bulk__btn"
+              disabled={selected.length === 0}
+              onClick={handleBroadcastNotice}
+            >
+              Broadcast Notice
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -562,6 +623,132 @@ const Vehicles = ({
           </nav>
         </div>
       </Card>
+
+      {/* ---------- Add Vehicle Modal Dialog ---------- */}
+      {isAddModalOpen && (
+        <div className="vh-modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
+          <div className="vh-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="vh-modal-head">
+              <div className="vh-modal-title">
+                <CirclePlus size={15} />
+                <h3>Add Vehicle to Master Fleet Registry</h3>
+              </div>
+              <button
+                type="button"
+                className="vh-modal-close"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddSubmit} className="vh-modal-form">
+              <div className="vh-form-row">
+                <label>
+                  <span>VEHICLE IDENTIFIER *</span>
+                  <Input
+                    required
+                    placeholder="e.g. PK-152"
+                    value={modalId}
+                    onChange={(e) => setModalId(e.target.value)}
+                    className="vh-modal-input"
+                  />
+                </label>
+
+                <label>
+                  <span>REGISTRATION NUMBER *</span>
+                  <Input
+                    required
+                    placeholder="e.g. KP-LE-5520"
+                    value={modalReg}
+                    onChange={(e) => setModalReg(e.target.value)}
+                    className="vh-modal-input"
+                  />
+                </label>
+              </div>
+
+              <div className="vh-form-row">
+                <label>
+                  <span>VEHICLE MAKE &amp; MODEL *</span>
+                  <Select value={modalModel} onValueChange={setModalModel}>
+                    <SelectTrigger className="vh-modal-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hino Metro">Hino Metro</SelectItem>
+                      <SelectItem value="Isuzu Journey">Isuzu Journey</SelectItem>
+                      <SelectItem value="Toyota Coaster">Toyota Coaster</SelectItem>
+                      <SelectItem value="Daewoo City Bus">Daewoo City Bus</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+
+                <label>
+                  <span>SEATING CAPACITY *</span>
+                  <Input
+                    type="number"
+                    min="14"
+                    max="80"
+                    required
+                    value={modalSeats}
+                    onChange={(e) => setModalSeats(e.target.value)}
+                    className="vh-modal-input"
+                  />
+                </label>
+              </div>
+
+              <div className="vh-form-row">
+                <label>
+                  <span>ASSIGNED ROUTE CORRIDOR *</span>
+                  <Select value={modalRoute} onValueChange={setModalRoute}>
+                    <SelectTrigger className="vh-modal-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Peshawar → Mardan">Peshawar → Mardan</SelectItem>
+                      <SelectItem value="Peshawar → Nowshera">Peshawar → Nowshera</SelectItem>
+                      <SelectItem value="Peshawar → Charsadda">Peshawar → Charsadda</SelectItem>
+                      <SelectItem value="Ring Road Circular">Ring Road Circular</SelectItem>
+                      <SelectItem value="BRT Feeder Line 2">BRT Feeder Line 2</SelectItem>
+                      <SelectItem value="City Terminal Shuttles">City Terminal Shuttles</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+
+                <label>
+                  <span>ASSIGNED DEPOT *</span>
+                  <Select value={modalDepot} onValueChange={setModalDepot}>
+                    <SelectTrigger className="vh-modal-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hayatabad Depot">Hayatabad Depot</SelectItem>
+                      <SelectItem value="Ring Road Depot">Ring Road Depot</SelectItem>
+                      <SelectItem value="Charsadda Depot">Charsadda Depot</SelectItem>
+                      <SelectItem value="City Terminal Depot">City Terminal Depot</SelectItem>
+                      <SelectItem value="BRT Depot">BRT Depot</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+              </div>
+
+              <div className="vh-modal-actions">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" className="vh-btn-add">
+                  Register Vehicle
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

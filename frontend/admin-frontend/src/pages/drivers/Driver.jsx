@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     RefreshCw,
     ShieldCheck,
@@ -494,6 +495,7 @@ const Gauge = ({ value }) => {
 /* ------------------------------------------------------------------ */
 
 const SafetyDossier = ({ driver }) => {
+    const navigate = useNavigate();
     const canContact = driver.status !== "offline" && driver.status !== "suspended";
     const isSos = driver.status === "on-trip-sos";
     const isSuspended = driver.status === "suspended";
@@ -616,17 +618,31 @@ const SafetyDossier = ({ driver }) => {
                     <span>OPERATIONAL DIRECT ACTIONS</span>
                 </div>
                 <div className="drv-actions">
-                    <Button className="drv-btn drv-btn--call" disabled={!canContact}>
+                    <Button
+                        className="drv-btn drv-btn--call"
+                        disabled={!canContact}
+                        onClick={() => {
+                            if (driver.phone) window.location.href = `tel:${driver.phone.replace(/\s/g, "")}`;
+                        }}
+                    >
                         <Phone size={13} strokeWidth={2.2} />
                         Call Cabin
                     </Button>
-                    <Button className="drv-btn drv-btn--intercept" disabled={!canContact}>
+                    <Button
+                        className="drv-btn drv-btn--intercept"
+                        disabled={!canContact}
+                        onClick={() => navigate("/emergency")}
+                    >
                         <MapPin size={13} strokeWidth={2.2} />
                         Police Intercept
                     </Button>
                 </div>
 
-                <Button variant="ghost" className="drv-audit">
+                <Button
+                    variant="ghost"
+                    className="drv-audit"
+                    onClick={() => navigate("/driver-behavior")}
+                >
                     <History size={12} strokeWidth={2} />
                     View 30-Day Driving Audit Log
                 </Button>
@@ -645,6 +661,13 @@ const DriversPage = ({ onRefresh }) => {
     const [rowsPerPage, setRowsPerPage] = useState(8);
     const [page, setPage] = useState(1);
     const [selectedId, setSelectedId] = useState(DRIVERS[0].id);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        onRefresh?.();
+        setTimeout(() => setRefreshing(false), 600);
+    };
 
     const activeTab = TABS.find((t) => t.value === tab);
 
@@ -773,9 +796,9 @@ const DriversPage = ({ onRefresh }) => {
                             className="drv-btn-refresh"
                             aria-label="Refresh"
                             title="Refresh"
-                            onClick={onRefresh}
+                            onClick={handleRefresh}
                         >
-                            <RefreshCw size={13} strokeWidth={2} />
+                            <RefreshCw size={13} strokeWidth={2} className={refreshing ? "drv-spin" : ""} />
                         </Button>
                     </div>
                 </div>
