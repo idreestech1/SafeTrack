@@ -48,6 +48,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { highlightText } from "@/lib/highlightText";
 
 import "./driver_behavior.css";
 
@@ -557,16 +558,16 @@ const DriverBehavior = () => {
                                 <AvatarFallback>{initials(d.name)}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <strong>{d.name}</strong>
-                                <span>{d.id} • {d.license}</span>
+                                <strong>{highlightText(d.name, searchQuery)}</strong>
+                                <span>{highlightText(d.id, searchQuery)} • {highlightText(d.license, searchQuery)}</span>
                               </div>
                             </div>
                           </TableCell>
 
                           <TableCell>
                             <div className="dbv-route-cell">
-                              <span className="dbv-veh-badge">{d.vehicleId}</span>
-                              <small>{d.route}</small>
+                              <span className="dbv-veh-badge">{highlightText(d.vehicleId, searchQuery)}</span>
+                              <small>{highlightText(d.route, searchQuery)}</small>
                             </div>
                           </TableCell>
 

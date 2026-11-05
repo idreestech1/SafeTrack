@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -17,10 +17,17 @@ import {
   ChevronRight,
   ShieldCheck,
   Check,
+  CreditCard,
+  ArrowRight,
+  CornerDownLeft,
+  Filter,
+  Radio,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { GLOBAL_ENTITIES, searchGlobalEntities } from "../../data/globalSearchData";
 import "./TopBar.css";
 
 const ROUTE_TITLES = {
@@ -39,20 +46,46 @@ const ROUTE_TITLES = {
   "/passengers": "Passengers",
 };
 
-const SYSTEM_PAGES = [
-  { label: "Dashboard", path: "/dashboard", desc: "Operations overview & fleet map", icon: Bus },
-  { label: "Live Fleet", path: "/live-fleet", desc: "Real-time GPS road tracking", icon: Bus },
-  { label: "Vehicles Registry", path: "/vehicles", desc: "Fleet inventory, models & telemetry", icon: Bus },
-  { label: "Drivers Directory", path: "/drivers", desc: "Staff profiles, licensing & roster", icon: Users },
-  { label: "Routes & Corridors", path: "/routes", desc: "KPK highway & BRT route network", icon: RouteIcon },
-  { label: "Trips & Headways", path: "/trips", desc: "Timetables & arrival schedules", icon: Clock },
-  { label: "Passenger Requests", path: "/passenger-requests", desc: "Live hailing & geofence pickup", icon: Users },
-  { label: "Emergency / SOS", path: "/emergency", desc: "Incident Command (ICS-200) & distress", icon: Siren },
-  { label: "Camera Monitoring", path: "/camera", desc: "Live onboard CCTV & AI DMS streams", icon: Video },
-  { label: "Driver Behavior", path: "/driver-behavior", desc: "Telematics scorecard & fatigue", icon: Gauge },
-  { label: "Alerts Center", path: "/alerts", desc: "Telemetry events & speed violations", icon: TriangleAlert },
-  { label: "Passengers & SmartPass", path: "/passengers", desc: "Transit cards, CNIC & RFID passes", icon: Users },
+const CATEGORIES = [
+  { id: "all", label: "All" },
+  { id: "vehicles", label: "Vehicles" },
+  { id: "drivers", label: "Drivers" },
+  { id: "routes", label: "Routes" },
+  { id: "trips", label: "Trips" },
+  { id: "passengers", label: "Passengers" },
+  { id: "alerts", label: "Alerts" },
+  { id: "cameras", label: "CCTV" },
+  { id: "pages", label: "Pages" },
 ];
+
+/**
+ * Helper to highlight matching query terms inside text
+ */
+function highlightText(text, query) {
+  if (!text || !query || !query.trim()) return text;
+
+  const terms = query
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((t) => t.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"));
+
+  if (terms.length === 0) return text;
+
+  const regex = new RegExp(`(${terms.join("|")})`, "gi");
+  const parts = String(text).split(regex);
+  const matchPattern = new RegExp(`^(${terms.join("|")})$`, "i");
+
+  return parts.map((part, index) =>
+    matchPattern.test(part) ? (
+      <mark key={index} className="topbar__highlight st-highlight">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
 
 const INITIAL_NOTIFICATIONS = [
   {
@@ -102,14 +135,17 @@ const Topbar = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [secondsAgo, setSecondsAgo] = useState(2);
   const [syncing, setSyncing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
   const searchRef = useRef(null);
   const notifRef = useRef(null);
+  const inputRef = useRef(null);
 
   const displayTitle = pageTitle || ROUTE_TITLES[location.pathname] || "Monitoring Console";
 
@@ -124,7 +160,7 @@ const Topbar = ({
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        searchRef.current?.focus();
+        inputRef.current?.focus();
         setShowSearchDropdown(true);
       }
     };
@@ -146,6 +182,49 @@ const Topbar = ({
     return () => document.removeEventListener("mousedown", clickHandler);
   }, []);
 
+  // Global Search Results calculation
+  const searchResults = useMemo(() => {
+    let results = [];
+    if (!query.trim()) {
+      // Default view when input is focused with no query
+      results = GLOBAL_ENTITIES.filter((item) => {
+        if (selectedCategory === "all") {
+          return item.status === "sos" || item.category === "pages" || item.id === "veh-pk-102";
+        }
+        return item.category === selectedCategory;
+      });
+    } else {
+      results = searchGlobalEntities(query);
+      if (selectedCategory !== "all") {
+        results = results.filter((item) => item.category === selectedCategory);
+      }
+    }
+    return results;
+  }, [query, selectedCategory]);
+
+  // Reset selectedIndex when results change
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [searchResults]);
+
+  // Keyboard navigation inside search dropdown
+  const handleKeyDown = (e) => {
+    if (!showSearchDropdown) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(searchResults.length - 1, prev + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(0, prev - 1));
+    } else if (e.key === "Enter" && searchResults[selectedIndex]) {
+      e.preventDefault();
+      handleSelectEntity(searchResults[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setShowSearchDropdown(false);
+    }
+  };
+
   const handleSync = async () => {
     setSyncing(true);
     try {
@@ -156,15 +235,15 @@ const Topbar = ({
     }
   };
 
-  const handleSearch = (e) => {
+  const handleSearchChange = (e) => {
     const val = e.target.value;
     setQuery(val);
     setShowSearchDropdown(true);
     if (onSearch) onSearch(val);
   };
 
-  const handleSelectPage = (path) => {
-    navigate(path);
+  const handleSelectEntity = (entity) => {
+    navigate(entity.path, { state: { targetId: entity.badge, entityTitle: entity.title } });
     setShowSearchDropdown(false);
     setQuery("");
   };
@@ -202,12 +281,26 @@ const Topbar = ({
     URL.revokeObjectURL(url);
   };
 
-  // Filtered pages for search
-  const filteredPages = SYSTEM_PAGES.filter((p) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return p.label.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.path.toLowerCase().includes(q);
-  });
+  const getEntityIcon = (cat) => {
+    switch (cat) {
+      case "vehicles":
+        return Bus;
+      case "drivers":
+        return Users;
+      case "routes":
+        return RouteIcon;
+      case "trips":
+        return Clock;
+      case "passengers":
+        return CreditCard;
+      case "alerts":
+        return TriangleAlert;
+      case "cameras":
+        return Video;
+      default:
+        return ExternalLink;
+    }
+  };
 
   return (
     <header className="topbar">
@@ -236,49 +329,136 @@ const Topbar = ({
         </div>
       </div>
 
-      {/* Right: search + actions */}
+      {/* Right: global search + actions */}
       <div className="topbar__right">
-        {/* Search Command Input */}
+        {/* Global Search Command Input */}
         <div className="topbar__search-wrap" ref={searchRef}>
           <label className="topbar__search">
             <Search size={15} strokeWidth={1.8} className="topbar__search-icon" />
             <input
+              ref={inputRef}
               type="text"
               value={query}
-              onChange={handleSearch}
+              onChange={handleSearchChange}
               onFocus={() => setShowSearchDropdown(true)}
-              placeholder="Search units, drivers, routes, trips…"
+              onKeyDown={handleKeyDown}
+              placeholder="Search units, drivers, routes, trips, CNIC…"
             />
-            <kbd className="topbar__kbd">Ctrl+K</kbd>
+            {query ? (
+              <button
+                type="button"
+                className="topbar__search-clear"
+                onClick={() => {
+                  setQuery("");
+                  inputRef.current?.focus();
+                }}
+              >
+                <X size={12} />
+              </button>
+            ) : (
+              <kbd className="topbar__kbd">Ctrl+K</kbd>
+            )}
           </label>
 
-          {/* Smart Search Palette Dropdown */}
+          {/* Global Search Command Palette Popover */}
           {showSearchDropdown && (
             <div className="topbar__search-popover">
               <div className="topbar__search-head">
-                <span>QUICK NAVIGATION</span>
-                <span className="topbar__search-hint">Jump directly to any operations module</span>
+                <div className="topbar__search-head-title">
+                  <Search size={12} />
+                  <strong>GLOBAL TRANSIT REPOSITORY INDEX</strong>
+                </div>
+                <div className="topbar__search-count">
+                  {query ? (
+                    <span><strong>{searchResults.length}</strong> matches</span>
+                  ) : (
+                    <span><strong>{GLOBAL_ENTITIES.length}</strong> cataloged entities</span>
+                  )}
+                </div>
               </div>
-              <div className="topbar__search-list">
-                {filteredPages.slice(0, 7).map((p) => {
-                  const Icon = p.icon;
+
+              {/* Category Filter Pills */}
+              <div className="topbar__search-tabs">
+                {CATEGORIES.map((cat) => {
+                  const isActive = selectedCategory === cat.id;
                   return (
-                    <div
-                      key={p.path}
-                      className="topbar__search-item"
-                      onClick={() => handleSelectPage(p.path)}
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={"topbar__search-tab" + (isActive ? " is-active" : "")}
+                      onClick={() => setSelectedCategory(cat.id)}
                     >
-                      <div className="topbar__search-item-icon">
-                        <Icon size={13} />
-                      </div>
-                      <div className="topbar__search-item-info">
-                        <strong>{p.label}</strong>
-                        <small>{p.desc}</small>
-                      </div>
-                      <ChevronRight size={12} className="topbar__search-arrow" />
-                    </div>
+                      {cat.label}
+                    </button>
                   );
                 })}
+              </div>
+
+              {/* Search Result List */}
+              <div className="topbar__search-list">
+                {searchResults.length === 0 ? (
+                  <div className="topbar__search-empty">
+                    <Search size={22} className="topbar__search-empty-icon" />
+                    <strong>No transit records matching &ldquo;{query}&rdquo;</strong>
+                    <p>
+                      Try searching by vehicle ID (e.g. <code>PK-102</code>), driver name (e.g. <code>Muhammad Ali</code>),
+                      CNIC (e.g. <code>17301-…</code>), trip code (e.g. <code>TRP-8012</code>), route, or stop landmark.
+                    </p>
+                  </div>
+                ) : (
+                  searchResults.map((item, idx) => {
+                    const Icon = getEntityIcon(item.category);
+                    const isSelected = idx === selectedIndex;
+                    const isSos = item.status === "sos";
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={
+                          "topbar__search-item" +
+                          (isSelected ? " is-selected" : "") +
+                          (isSos ? " is-sos" : "")
+                        }
+                        onClick={() => handleSelectEntity(item)}
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                      >
+                        <div className={`topbar__search-item-icon topbar__search-item-icon--${item.category}`}>
+                          <Icon size={13} strokeWidth={2.2} />
+                        </div>
+
+                        <div className="topbar__search-item-info">
+                          <div className="topbar__search-item-top">
+                            <span className="topbar__search-badge">{highlightText(item.badge, query)}</span>
+                            <strong>{highlightText(item.title, query)}</strong>
+                            {item.statusLabel && (
+                              <span className={`topbar__search-status topbar__search-status--${item.status}`}>
+                                {highlightText(item.statusLabel, query)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="topbar__search-item-sub">{highlightText(item.subtitle, query)}</p>
+                        </div>
+
+                        <div className="topbar__search-item-act">
+                          <span className="topbar__search-cat-lbl">{item.categoryLabel}</span>
+                          <ChevronRight size={13} className="topbar__search-arrow" />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Search Palette Footer */}
+              <div className="topbar__search-foot">
+                <div className="topbar__search-keys">
+                  <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+                  <span><kbd>↵</kbd> Select</span>
+                  <span><kbd>ESC</kbd> Close</span>
+                </div>
+                <div className="topbar__search-scope">
+                  KPK Transit &amp; Police Unified Database
+                </div>
               </div>
             </div>
           )}

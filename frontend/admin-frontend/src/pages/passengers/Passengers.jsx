@@ -49,6 +49,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { highlightText } from "@/lib/highlightText";
 
 import "./passengers.css";
 
@@ -718,21 +719,21 @@ const Passengers = () => {
                           onClick={() => setSelectedId(p.id)}
                         >
                           <TableCell>
-                            <span className="pax-code-badge">{p.id}</span>
+                            <span className="pax-code-badge">{highlightText(p.id, searchQuery)}</span>
                           </TableCell>
 
                           <TableCell>
                             <div className="pax-user-cell">
                               <div className="pax-user-meta">
-                                <strong>{p.name}</strong>
-                                <span>{p.cnic}</span>
+                                <strong>{highlightText(p.name, searchQuery)}</strong>
+                                <span>{highlightText(p.cnic, searchQuery)}</span>
                               </div>
                             </div>
                           </TableCell>
 
                           <TableCell>
                             <div className="pax-tier-cell">
-                              <strong>{p.tier}</strong>
+                              <strong>{highlightText(p.tier, searchQuery)}</strong>
                               <small>{p.tierDiscount}</small>
                             </div>
                           </TableCell>
@@ -746,7 +747,7 @@ const Passengers = () => {
 
                           <TableCell>
                             <span style={{ fontSize: "11px", color: "#334155" }}>
-                              {p.frequentRoute.split(":")[0]}
+                              {highlightText(p.frequentRoute.split(":")[0], searchQuery)}
                             </span>
                           </TableCell>
 

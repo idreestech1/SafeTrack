@@ -45,6 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { highlightText } from "@/lib/highlightText";
 
 import "./passengerRequests.css";
 
@@ -524,7 +525,7 @@ const PassengerRequests = ({
                     <TableCell className="pr-td-id">
                       <div className="pr-req">
                         <div className="pr-req__line">
-                          <strong className={r.boarded ? "pr-req__id pr-req__id--done" : "pr-req__id"}>{r.id}</strong>
+                          <strong className={r.boarded ? "pr-req__id pr-req__id--done" : "pr-req__id"}>{highlightText(r.id, query)}</strong>
                           {dot && <i className={`pr-req__dot pr-req__dot--${dot}`} />}
                         </div>
                         <span className="pr-req__time">{r.time}</span>
@@ -537,9 +538,9 @@ const PassengerRequests = ({
                           <AvatarFallback>{initials(r.passenger.name)}</AvatarFallback>
                         </Avatar>
                         <div className="pr-pax__info">
-                          <strong>{r.passenger.name}</strong>
+                          <strong>{highlightText(r.passenger.name, query)}</strong>
                           <span>
-                            #{r.passenger.code} <i>•</i>
+                            #{highlightText(r.passenger.code, query)} <i>•</i>
                             <b><Star size={10} fill="currentColor" /> {r.passenger.rating.toFixed(1)}</b>
                           </span>
                         </div>
@@ -548,16 +549,16 @@ const PassengerRequests = ({
 
                     <TableCell className="pr-td-stop">
                       <div className="pr-stop">
-                        <strong>{r.stop}</strong>
-                        <span>{r.stopNote}</span>
+                        <strong>{highlightText(r.stop, query)}</strong>
+                        <span>{highlightText(r.stopNote, query)}</span>
                       </div>
                     </TableCell>
 
                     <TableCell className="pr-td-veh">
                       <div className="pr-veh">
                         <div className="pr-veh__line">
-                          <span className="pr-plate">{r.vehicle.id}</span>
-                          <strong>{r.vehicle.driver}</strong>
+                          <span className="pr-plate">{highlightText(r.vehicle.id, query)}</span>
+                          <strong>{highlightText(r.vehicle.driver, query)}</strong>
                         </div>
                         <span className={r.boarded ? "pr-veh__note pr-veh__note--ok" : "pr-veh__note"}>
                           {r.vehicle.note}

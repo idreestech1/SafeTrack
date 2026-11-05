@@ -49,6 +49,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { highlightText } from "@/lib/highlightText";
 
 import "./trips.css";
 
@@ -703,20 +704,20 @@ const Trips = () => {
                           onClick={() => setSelectedId(t.id)}
                         >
                           <TableCell>
-                            <span className="trp-code-badge">{t.id}</span>
+                            <span className="trp-code-badge">{highlightText(t.id, searchQuery)}</span>
                           </TableCell>
 
                           <TableCell>
                             <div className="trp-route-cell">
-                              <strong>{t.routeName}</strong>
-                              <span>{t.corridor}</span>
+                              <strong>{highlightText(t.routeName, searchQuery)}</strong>
+                              <span>{highlightText(t.corridor, searchQuery)}</span>
                             </div>
                           </TableCell>
 
                           <TableCell>
                             <div className="trp-vehicle-cell">
-                              <span className="trp-veh-tag">{t.vehicleId}</span>
-                              <small>{t.driver}</small>
+                              <span className="trp-veh-tag">{highlightText(t.vehicleId, searchQuery)}</span>
+                              <small>{highlightText(t.driver, searchQuery)}</small>
                             </div>
                           </TableCell>
 
@@ -894,7 +895,7 @@ const Trips = () => {
                       {i < selectedTrip.stops.length - 1 && <div className="trp-stop-line" />}
                     </div>
                     <div className="trp-stop-text">
-                      <strong>{st.name}</strong>
+                      <strong>{highlightText(st.name, searchQuery)}</strong>
                       <small>{st.time} {st.isNext ? "• Approaching Next" : ""}</small>
                     </div>
                   </div>

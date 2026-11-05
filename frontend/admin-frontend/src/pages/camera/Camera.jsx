@@ -787,7 +787,7 @@ const Camera = () => {
               <SelectContent>
                 {VEHICLE_FEEDS.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
-                    {v.id} • {v.driver.split(" (")[0]} {v.sosActive ? "🚨 [SOS ACTIVE]" : ""}
+                    {v.id} • {v.driver.split(" (")[0]} {v.sosActive ? "• [SOS ACTIVE]" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

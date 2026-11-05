@@ -46,6 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { highlightText } from "@/lib/highlightText";
 
 import "./routes.css";
 
@@ -738,13 +739,13 @@ const RoutesPage = () => {
                           onClick={() => setSelectedId(r.id)}
                         >
                           <TableCell>
-                            <span className="rt-code-badge">{r.code}</span>
+                            <span className="rt-code-badge">{highlightText(r.code, search)}</span>
                           </TableCell>
 
                           <TableCell>
                             <div className="rt-route-title">
-                              <strong>{r.name}</strong>
-                              <span>{r.corridor}</span>
+                              <strong>{highlightText(r.name, search)}</strong>
+                              <span>{highlightText(r.corridor, search)}</span>
                             </div>
                           </TableCell>
 
@@ -894,7 +895,7 @@ const RoutesPage = () => {
 
                       <div className="rt-stop-info">
                         <div className="rt-stop-name-row">
-                          <strong>{stopName}</strong>
+                          <strong>{highlightText(stopName, search)}</strong>
                           <span className="rt-stop-time">{offsetTime}</span>
                         </div>
                         <span className="rt-stop-type">

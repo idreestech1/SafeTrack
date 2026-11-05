@@ -40,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { highlightText } from "@/lib/highlightText";
 
 import "./vehicles.css";
 
@@ -523,16 +524,16 @@ const Vehicles = ({
                   <TableCell>
                     <span className="vh-id">
                       {isSos && <TriangleAlert size={18} className="vh-id__warn" />}
-                      {v.id}
+                      {highlightText(v.id, query)}
                     </span>
                   </TableCell>
 
-                  <TableCell><span className="vh-plate">{v.reg}</span></TableCell>
+                  <TableCell><span className="vh-plate">{highlightText(v.reg, query)}</span></TableCell>
 
                   <TableCell>
                     <div className={"vh-type" + (v.status === "depot" ? " vh-type--dim" : "")}>
-                      <strong>{v.model}</strong>
-                      <span>{v.spec}</span>
+                      <strong>{highlightText(v.model, query)}</strong>
+                      <span>{highlightText(v.spec, query)}</span>
                     </div>
                   </TableCell>
 
@@ -543,8 +544,8 @@ const Vehicles = ({
                           <AvatarFallback>{initials(v.driver.name)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <strong>{v.driver.name}</strong>
-                          <span>{v.driver.code}</span>
+                          <strong>{highlightText(v.driver.name, query)}</strong>
+                          <span>{highlightText(v.driver.code, query)}</span>
                         </div>
                       </div>
                     ) : (
@@ -555,7 +556,7 @@ const Vehicles = ({
                   <TableCell>
                     <span className="vh-route">
                       {v.routeIsDepot ? <Warehouse size={16} /> : <RouteIcon size={16} />}
-                      {v.route}
+                      {highlightText(v.route, query)}
                     </span>
                   </TableCell>
 

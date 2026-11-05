@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { highlightText } from "@/lib/highlightText";
 
 import "./dashboard.css";
 
@@ -828,9 +829,9 @@ const Dashboard = ({
                 <tbody>
                   {visible.map((v) => (
                     <tr key={v.id} className={v.id === selected?.id ? "is-selected" : ""} onClick={() => setSelectedId(v.id)}>
-                      <td><strong>{v.id}</strong></td>
-                      <td>{v.driver.name}</td>
-                      <td>{ROUTES.find((r) => r.id === v.routeId)?.name}</td>
+                      <td><strong>{highlightText(v.id, query)}</strong></td>
+                      <td>{highlightText(v.driver.name, query)}</td>
+                      <td>{highlightText(ROUTES.find((r) => r.id === v.routeId)?.name, query)}</td>
                       <td><Badge className={`db-tag db-tag--${STATUS_UI[v.status].tone}`}>{STATUS_UI[v.status].label}</Badge></td>
                       <td>{v.speed} km/h</td>
                       <td>{v.seats}/{v.capacity}</td>

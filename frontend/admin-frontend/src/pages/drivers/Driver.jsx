@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import KpiCards from "@/components/kpicards/KpiCards";
+import { highlightText } from "@/lib/highlightText";
 
 import "./driver.css";
 
@@ -880,7 +881,7 @@ const DriversPage = ({ onRefresh }) => {
                                                 </Avatar>
                                                 <div className="drv-profile__info">
                                                     <span className={"drv-name" + (suspended ? " drv-name--danger" : "")}>
-                                                        {d.name}
+                                                        {highlightText(d.name, search)}
                                                     </span>
                                                     <span
                                                         className={
@@ -893,32 +894,32 @@ const DriversPage = ({ onRefresh }) => {
                                                         {d.status === "on-trip-sos" && (
                                                             <span className="drv-sub__dot" />
                                                         )}
-                                                        {d.sub}
+                                                        {highlightText(d.sub, search)}
                                                     </span>
                                                 </div>
                                             </div>
                                         </TableCell>
 
                                         <TableCell className="drv-cell-license">
-                                            <span className="drv-license-text">{d.license}</span>
+                                            <span className="drv-license-text">{highlightText(d.license, search)}</span>
                                         </TableCell>
 
                                         <TableCell className="drv-cell-cnic">
-                                            <span className="drv-cnic-text">{d.cnic}</span>
+                                            <span className="drv-cnic-text">{highlightText(d.cnic, search)}</span>
                                         </TableCell>
 
                                         <TableCell className="drv-cell-vehicle">
                                             {d.vehicle && !suspended ? (
-                                                <span className="drv-plate">{d.vehicle}</span>
+                                                <span className="drv-plate">{highlightText(d.vehicle, search)}</span>
                                             ) : (
                                                 <span className={suspended ? "drv-danger-text" : "drv-muted"}>
-                                                    {d.vehicle ?? "None"}
+                                                    {highlightText(d.vehicle ?? "None", search)}
                                                 </span>
                                             )}
                                         </TableCell>
 
                                         <TableCell className="drv-cell-route">
-                                            <span className="drv-route-text">{d.route}</span>
+                                            <span className="drv-route-text">{highlightText(d.route, search)}</span>
                                         </TableCell>
 
                                         <TableCell className="drv-cell-status">

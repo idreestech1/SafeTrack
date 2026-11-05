@@ -53,6 +53,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { highlightText } from "@/lib/highlightText";
 
 import "./alerts.css";
 
@@ -652,7 +653,7 @@ const Alerts = () => {
                           onClick={() => setSelectedId(a.id)}
                         >
                           <TableCell>
-                            <span className="alt-code-badge">{a.id}</span>
+                            <span className="alt-code-badge">{highlightText(a.id, searchQuery)}</span>
                           </TableCell>
 
                           <TableCell>
@@ -672,24 +673,24 @@ const Alerts = () => {
 
                           <TableCell>
                             <div className="alt-event-desc">
-                              <strong>{a.title}</strong>
+                              <strong>{highlightText(a.title, searchQuery)}</strong>
                               <span>
-                                {a.vehicleId} • {a.vehicleReg}
+                                {highlightText(a.vehicleId, searchQuery)} • {highlightText(a.vehicleReg, searchQuery)}
                               </span>
                             </div>
                           </TableCell>
 
                           <TableCell>
                             <div className="alt-driver-cell">
-                              <strong>{a.driver}</strong>
-                              <small>{a.driverCode}</small>
+                              <strong>{highlightText(a.driver, searchQuery)}</strong>
+                              <small>{highlightText(a.driverCode, searchQuery)}</small>
                             </div>
                           </TableCell>
 
                           <TableCell>
                             <div className="alt-loc-cell">
-                              <span>{a.location}</span>
-                              <small>{a.route}</small>
+                              <span>{highlightText(a.location, searchQuery)}</span>
+                              <small>{highlightText(a.route, searchQuery)}</small>
                             </div>
                           </TableCell>
 

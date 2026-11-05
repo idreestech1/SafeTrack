@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { highlightText } from "@/lib/highlightText";
 
 import "./livefleet.css";
 
@@ -471,7 +472,7 @@ const StatCard = ({ icon: Icon, tone = "blue", label, value, sub, note }) => (
   </Card>
 );
 
-const VehicleCard = ({ v, selected, tracking, onSelect, onTrack, onInspect }) => {
+const VehicleCard = ({ v, query, selected, tracking, onSelect, onTrack, onInspect }) => {
   const ui = STATUS_UI[v.status];
   const pct = v.capacity ? Math.round((v.seats / v.capacity) * 100) : 0;
   const atCapacity = pct >= 100;
@@ -496,7 +497,7 @@ const VehicleCard = ({ v, selected, tracking, onSelect, onTrack, onInspect }) =>
     >
       <div className="lf-unit__top">
         <div className="lf-unit__title">
-          <h4>Unit {v.id}</h4>
+          <h4>Unit {highlightText(v.id, query)}</h4>
           <Badge className={`lf-pill lf-pill--${ui.tone}`}>
             {v.status === "sos" && <Siren size={10} strokeWidth={2.4} />}
             {v.status === "active" && <span className="lf-pill__dot" />}
@@ -515,10 +516,10 @@ const VehicleCard = ({ v, selected, tracking, onSelect, onTrack, onInspect }) =>
 
       <div className="lf-unit__meta">
         <span>
-          <User size={11} /> {v.driver}
+          <User size={11} /> {highlightText(v.driver, query)}
         </span>
         <span>
-          <Navigation size={11} /> {v.routeName}
+          <Navigation size={11} /> {highlightText(v.routeName, query)}
         </span>
       </div>
 
@@ -977,6 +978,7 @@ const LiveFleet = ({
               <VehicleCard
                 key={v.id}
                 v={v}
+                query={query}
                 selected={selectedId === v.id}
                 tracking={trackedId === v.id}
                 onSelect={() => setSelectedId(v.id)}
