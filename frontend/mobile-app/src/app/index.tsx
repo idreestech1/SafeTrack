@@ -9,14 +9,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { DriverDashboardScreen } from '@/driver/DriverDashboardScreen';
-import { PassengerDashboardScreen } from '@/passenger/PassengerDashboardScreen';
+import { DriverDashboardScreen } from '@/driver/dashboard/DriverDashboardScreen';
+import { PassengerDashboardScreen } from '@/passenger/dashboard/PassengerDashboardScreen';
 import {
   BusFrontIcon,
   NavArrowIcon,
   ArrowRightIcon,
   ShieldCheckIcon,
-} from '@/passenger/PassengerIcons';
+} from '@/passenger/icons/PassengerIcons';
 
 export default function AppLandingPage() {
   const insets = useSafeAreaInsets();

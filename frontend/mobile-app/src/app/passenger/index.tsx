@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { PassengerDashboardScreen } from '@/passenger/PassengerDashboardScreen';
+import { PassengerDashboardScreen } from '@/passenger/dashboard/PassengerDashboardScreen';
 
 export default function PassengerDashboardRoute() {
   const router = useRouter();

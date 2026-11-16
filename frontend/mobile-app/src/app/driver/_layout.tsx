@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { DriverBottomTabs } from '@/driver/DriverBottomTabs';
+import { DriverBottomTabs } from '@/driver/bottom_tabs/DriverBottomTabs';
 
 export default function DriverTabsLayout() {
   return (
