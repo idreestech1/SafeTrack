@@ -67,7 +67,7 @@ export const DriverRequestsScreen: React.FC<DriverRequestsScreenProps> = ({
       id: 'REQ-101',
       paxId: '#P-1024',
       name: 'Ahmad Khan',
-      avatar: require('../../assets/images/avatar-ahmad.png'),
+      avatar: require('../../../assets/images/avatar-ahmad.png'),
       rating: 4.8,
       seats: 1,
       distance: '120m away',
@@ -83,7 +83,7 @@ export const DriverRequestsScreen: React.FC<DriverRequestsScreenProps> = ({
       id: 'REQ-102',
       paxId: '#P-1025',
       name: 'Sana Gul',
-      avatar: require('../../assets/images/avatar-sana.png'),
+      avatar: require('../../../assets/images/avatar-sana.png'),
       rating: 5.0,
       seats: 1,
       distance: '350m away',
@@ -323,7 +323,7 @@ export const DriverRequestsScreen: React.FC<DriverRequestsScreenProps> = ({
                 <View style={styles.profileRow}>
                   <View style={styles.avatarWrap}>
                     <Image
-                      source={require('../../assets/images/avatar-ahmad.png')}
+                      source={require('../../../assets/images/avatar-ahmad.png')}
                       style={styles.avatarImage}
                       resizeMode="cover"
                     />
@@ -395,7 +395,7 @@ export const DriverRequestsScreen: React.FC<DriverRequestsScreenProps> = ({
                 {/* Live Radar Lock Map Viewport */}
                 <View style={styles.radarViewportContainer}>
                   <Image
-                    source={require('../../assets/images/request-radar-map.png')}
+                    source={require('../../../assets/images/request-radar-map.png')}
                     style={styles.radarMapImage}
                     resizeMode="cover"
                   />
@@ -471,7 +471,7 @@ export const DriverRequestsScreen: React.FC<DriverRequestsScreenProps> = ({
                 <View style={styles.profileRow}>
                   <View style={styles.avatarWrap}>
                     <Image
-                      source={require('../../assets/images/avatar-sana.png')}
+                      source={require('../../../assets/images/avatar-sana.png')}
                       style={styles.avatarImage}
                       resizeMode="cover"
                     />

@@ -142,7 +142,7 @@ export const DriverTripsScreen: React.FC<DriverTripsScreenProps> = ({
         {/* ========================================================== */}
         <View style={styles.mapCard}>
           <Image
-            source={require('../../assets/images/live-navigation-map.png')}
+            source={require('../../../assets/images/live-navigation-map.png')}
             style={styles.mapImage}
             resizeMode="cover"
           />
